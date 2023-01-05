@@ -3,7 +3,7 @@ using Amazon.Lambda.APIGatewayEvents;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace LambdaAPIGatewayConsole;
+namespace APIGatewayConsole;
 
 internal class Program
 {
