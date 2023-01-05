@@ -2,4 +2,6 @@
 
 HTTP Request -- (Proxy) --> Lambda 
 
-## URL FORMAT -> http://xxxxxxxx/2015-03-31/functions/{functionName}/invocations (POST)
+- URL FORMAT -> http://xxxxxxxx/2015-03-31/functions/{functionName}/invocations (POST)
+- Use AmazonLambdaClient
+- APIGatewayRequest/Response
