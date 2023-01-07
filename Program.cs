@@ -3,7 +3,7 @@ using Amazon.Lambda.APIGatewayEvents;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
-namespace APIGatewayConsole;
+namespace LambdaAPIGatewayConsole;
 
 internal class Program
 {
@@ -22,7 +22,8 @@ internal class Program
 
         app.Map("", c =>
         {
-            var handler = c.ApplicationServices.GetService<APIGatewayHandler>()!;
+            //var handler = c.RequestServices.GetService<APIGatewayHandler>()!;
+            var handler = new APIGatewayHandler();
             handler.ServiceURL = "http://lambda-0001.10.29.211.2.nip.io:32474/";
             handler.FunctionName = "lambda-0001";
             c.Use(handler.Handle);
@@ -49,9 +50,19 @@ internal class APIGatewayHandler
 
         var request = new APIGatewayProxyRequest()
         {
-            Path = context.Request.Path,
+            Path = context.Request.Path,             
             HttpMethod = context.Request.Method
         };
+        
+        if (context.Request.QueryString.HasValue)
+        {
+            request.QueryStringParameters = context.Request.Query
+                .Where(kv => kv.Value.Count == 1)
+                .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+            request.MultiValueQueryStringParameters = context.Request.Query
+                .Where(kv => kv.Value.Count > 1)
+                .ToDictionary(kv => kv.Key, kv => (IList<String>)kv.Value.ToList());
+        }
 
         request.Headers = new Dictionary<String, String>();
         request.Headers.Add("Host", context.Request.Host.ToString());
@@ -98,9 +109,19 @@ internal class APIGatewayHandler
         {
             context.Response.StatusCode = response.StatusCode;
             context.Response.ContentType = response.Headers.ContainsKey("Content-Type") ? response.Headers["Content-Type"] : response.MultiValueHeaders["Content-Type"].FirstOrDefault()!;
+            context.Response.Headers.Connection = "Close";
+            if (response.IsBase64Encoded)
+            {
+                await context.Response.Body.WriteAsync(Convert.FromBase64String(response.Body));
+            }
+            else
+            {
+                var outputBuffer = System.Text.Encoding.UTF8.GetBytes(response.Body);
+                await context.Response.Body.WriteAsync(outputBuffer);                
+            }
 
-            var outputBuffer = System.Text.Encoding.UTF8.GetBytes(response.Body);
-            await context.Response.Body.WriteAsync(outputBuffer);
+            await context.Response.Body.FlushAsync();
+            context.Response.Body.Close();            
 
             handled = true;
         }
