@@ -64,18 +64,19 @@ internal class APIGatewayHandler
                 .ToDictionary(kv => kv.Key, kv => (IList<String>)kv.Value.ToList());
         }
 
-        request.Headers = new Dictionary<String, String>();
-        request.Headers.Add("Host", context.Request.Host.ToString());
+        //request.Headers = new Dictionary<String, String>();
+        //request.Headers.Add("Host", context.Request.Host.ToString());
+        request.Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
 
         switch (context.Request.Method)
         {
             case "POST":
             case "PUT":
-                request.Headers.Add("Content-Type", context.Request.ContentType);
+                //request.Headers.Add("Content-Type", context.Request.ContentType);
 
                 if ((context.Request.ContentLength ?? 0) > 0)
                 {
-                    request.Headers.Add("Content-Length", (context.Request.ContentLength ?? 0).ToString());
+                    //request.Headers.Add("Content-Length", (context.Request.ContentLength ?? 0).ToString());
                     var bodyBuffer = new Byte[context.Request.ContentLength ?? 0];
                     await context.Request.Body.ReadAsync(bodyBuffer, 0, bodyBuffer.Length);
                     request.Body = System.Text.Encoding.UTF8.GetString(bodyBuffer);
